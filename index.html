@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SatriaMoe - File Uploader</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>SatriaMoe</h1>
+            <p>Upload file kamu dan dapatkan link URL permanen!</p>
+            <div class="status-badge">
+                <i class="fas fa-circle" style="color: var(--success);"></i>
+                <span>Server Online</span>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <button class="nav-btn active" data-section="upload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Upload File</span>
+            </button>
+            <button class="nav-btn" data-section="recent">
+                <i class="fas fa-history"></i>
+                <span>History</span>
+            </button>
+            <button class="nav-btn" data-section="api">
+                <i class="fas fa-code"></i>
+                <span>API Docs</span>
+            </button>
+        </nav>
+
+        <section id="upload" class="section active">
+            <div class="uploader-card">
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Seret & Jatuhkan file di sini</h3>
+                    <p>Atau klik untuk memilih file dari komputer kamu</p>
+                    <p class="text-muted">Maksimum ukuran file: 100 MB</p>
+                    <input type="file" class="file-input" id="fileInput">
+                </div>
+
+                <div class="upload-info" id="uploadInfo">
+                    <div class="file-details">
+                        <div class="file-icon">
+                            <i class="fas fa-file" id="fileIcon"></i>
+                        </div>
+                        <div class="file-info">
+                            <h4 id="fileName">Nama file akan muncul di sini</h4>
+                            <p id="fileSize">Ukuran file akan muncul di sini</p>
+                        </div>
+                    </div>
+
+                    <div class="status-text" id="statusText">Siap diupload!</div>
+
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">0%</div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full btn-upload" id="uploadBtn">
+                    <i class="fas fa-upload"></i>
+                    <span>Unggah File Sekarang</span>
+                </button>
+            </div>
+
+            <div class="result-section" id="resultSection" style="display: none;">
+                <h2 class="result-title">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Hasil Upload</span>
+                </h2>
+                <div class="results-container" id="resultsContainer"></div>
+            </div>
+        </section>
+
+        <section id="recent" class="section">
+            <h2 class="uploads-title">
+                <i class="fas fa-history"></i>
+                <span>History Sesi Ini</span>
+            </h2>
+            <div class="uploads-list" id="uploadsList"></div>
+            <div class="empty-state" id="emptyRecent">
+                <i class="fas fa-folder-open"></i>
+                <h3>Belum ada upload</h3>
+                <p>Unggah file pertama kamu untuk melihatnya di sini!</p>
+            </div>
+        </section>
+
+        <section id="api" class="section">
+            <h2 class="uploads-title">
+                <i class="fas fa-code"></i>
+                <span>Dokumentasi API</span>
+            </h2>
+            <div class="uploader-card">
+                <p>Gunakan API kami untuk mengupload file langsung dari aplikasimu.</p>
+                
+                <div class="api-docs">
+                    <div class="api-block">
+                        <div class="api-title">Use with API</div>
+                        <div class="code-snippet">
+                            <pre id="curlCode">Loading...</pre>
+                        </div>
+                    </div>
+                    
+                    <div class="api-block">
+                        <div class="api-title">Success Response</div>
+                        <div class="code-snippet">
+<pre id="responseCode">{
+  "success": true,
+  "url": "https://...",
+  "size": "1.23 MB",
+  "name": "file.jpg",
+  "type": "image/jpeg"
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>&copy; 2023 SatriaMoe - File Uploader. Semua hak dilindungi.</p>
+            <div class="footer-links">
+                <a href="#"><i class="fas fa-shield-alt"></i> Privasi</a>
+                <a href="#"><i class="fas fa-file-contract"></i> Ketentuan</a>
+                <a href="#"><i class="fas fa-question-circle"></i> Bantuan</a>
+                <a href="#"><i class="fas fa-envelope"></i> Kontak</a>
+            </div>
+        </footer>
+    </div>
+
+    <div class="alert" id="alert">
+        <span id="alertMessage">Pesan pemberitahuan akan muncul di sini</span>
+    </div>
+
+    <script>
+        const navBtns = document.querySelectorAll('.nav-btn');
+        const sections = document.querySelectorAll('.section');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadInfo = document.getElementById('uploadInfo');
+        const statusText = document.getElementById('statusText');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileIcon = document.getElementById('fileIcon');
+        const resultSection = document.getElementById('resultSection');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const uploadsList = document.getElementById('uploadsList');
+        const emptyRecent = document.getElementById('emptyRecent');
+        const alert = document.getElementById('alert');
+        const alertMessage = document.getElementById('alertMessage');
+        const curlCode = document.getElementById('curlCode');
+        const responseCode = document.getElementById('responseCode');
+
+        let selectedFile = null;
+        let uploadedFiles = JSON.parse(sessionStorage.getItem('satriamoe_session_files')) || [];
+
+        const currentOrigin = window.location.origin;
+        const currentHost = window.location.host;
+        const apiUrl = `${currentOrigin}/upload`;
+        
+        curlCode.textContent = `cURL Example :
+curl -X POST "${apiUrl}" \\
+     -F "file=@/path/to/your/file.jpg"`;
+
+        responseCode.textContent = `{
+  "success": true,
+  "url": "${currentOrigin}/Xy12z.jpg",
+  "size": "1.23 MB",
+  "name": "Xy12z.jpg",
+  "type": "image/jpeg"
+}`;
+
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.add('click-animation');
+                setTimeout(() => { btn.classList.remove('click-animation'); }, 500);
+                
+                const sectionId = btn.getAttribute('data-section');
+                navBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                    if (section.id === sectionId) section.classList.add('active');
+                });
+                
+                if (sectionId === 'recent') loadRecentUploads();
+            });
+        });
+
+        uploadArea.addEventListener('click', () => {
+            uploadArea.classList.add('click-animation');
+            setTimeout(() => { uploadArea.classList.remove('click-animation'); }, 500);
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = 'var(--lime)';
+            uploadArea.style.transform = 'translate(-3px, -3px)';
+            uploadArea.style.boxShadow = 'var(--shadow)';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.backgroundColor = '';
+            uploadArea.style.transform = '';
+            uploadArea.style.boxShadow = '';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.backgroundColor = '';
+            uploadArea.style.transform = '';
+            uploadArea.style.boxShadow = '';
+            if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFileSelect(e.target.files[0]);
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            const icon = getFileIcon(file.type, file.name);
+            fileIcon.className = `fas fa-${icon}`;
+            uploadInfo.classList.add('active');
+            statusText.classList.add('active');
+            statusText.textContent = "Siap diupload!";
+            progressContainer.classList.remove('active');
+            showAlert(`File "${file.name}" siap diupload!`, 'success');
+        }
+
+        function getFileIcon(type, name) {
+            if (type.startsWith('image/')) return 'file-image';
+            if (type.startsWith('video/')) return 'file-video';
+            if (type.startsWith('audio/')) return 'file-audio';
+            if (type.includes('pdf')) return 'file-pdf';
+            if (type.includes('zip') || type.includes('compressed')) return 'file-archive';
+            if (type.includes('text') || name.endsWith('.txt')) return 'file-alt';
+            if (type.includes('word')) return 'file-word';
+            if (type.includes('excel') || type.includes('spreadsheet')) return 'file-excel';
+            return 'file';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        uploadBtn.addEventListener('click', () => {
+            uploadBtn.classList.add('click-animation');
+            setTimeout(() => { uploadBtn.classList.remove('click-animation'); }, 500);
+            
+            if (!selectedFile) {
+                showAlert('Pilih file terlebih dahulu!', 'error');
+                return;
+            }
+            
+            statusText.classList.remove('active');
+            progressContainer.classList.add('active');
+            
+            realUpload();
+        });
+
+        function realUpload() {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/upload.php', true);
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressFill.style.width = percentComplete + '%';
+                    progressText.textContent = Math.round(percentComplete) + '%';
+                }
+            };
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            handleUploadSuccess(response);
+                        } else {
+                            showAlert('Gagal mengupload: ' + response.error, 'error');
+                        }
+                    } catch (e) {
+                        showAlert('Terjadi kesalahan server.', 'error');
+                    }
+                } else {
+                    showAlert('Gagal mengupload file.', 'error');
+                }
+            };
+
+            xhr.onerror = function() {
+                showAlert('Network error.', 'error');
+            };
+
+            xhr.send(formData);
+        }
+
+        function handleUploadSuccess(data) {
+            const currentDate = new Date();
+            const fileData = {
+                name: data.name,
+                size: selectedFile.size, 
+                type: data.type,
+                url: data.url,
+                formattedDate: currentDate.toLocaleDateString('id-ID', {
+                    day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                })
+            };
+
+            uploadedFiles.unshift(fileData);
+            sessionStorage.setItem('satriamoe_session_files', JSON.stringify(uploadedFiles));
+
+            setTimeout(() => {
+                uploadInfo.classList.remove('active');
+                progressContainer.classList.remove('active');
+                resultSection.style.display = 'block';
+                addResultBox(fileData);
+                loadRecentUploads();
+                showAlert('File berhasil diunggah!', 'success');
+            }, 500);
+        }
+
+        function addResultBox(fileData) {
+            const icon = getFileIcon(fileData.type, fileData.name);
+            const resultBox = document.createElement('div');
+            resultBox.className = 'result-box';
+            resultBox.innerHTML = `
+                <div class="result-header">
+                    <div class="result-icon"><i class="fas fa-${icon}"></i></div>
+                    <div class="result-info">
+                        <h4>${fileData.name}</h4>
+                        <p>${formatFileSize(fileData.size)} • Upload Berhasil!</p>
+                    </div>
+                </div>
+                <div class="result-details">
+                    <div class="detail-item">
+                        <div class="detail-label">URL</div>
+                        <div class="detail-value">${fileData.url}</div>
+                    </div>
+                </div>
+                <div class="result-actions">
+                    <button class="btn btn-copy copy-url-btn" data-url="${fileData.url}">
+                        <i class="fas fa-copy"></i> <span>Copy URL</span>
+                    </button>
+                    <button class="btn btn-success download-btn" data-url="${fileData.url}">
+                        <i class="fas fa-external-link-alt"></i> <span>Visit</span>
+                    </button>
+                </div>
+            `;
+            
+            resultsContainer.prepend(resultBox);
+            
+            const copyBtn = resultBox.querySelector('.copy-url-btn');
+            const downloadBtn = resultBox.querySelector('.download-btn');
+            
+            copyBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(fileData.url).then(() => {
+                    this.innerHTML = '<i class="fas fa-check"></i><span>Copied!</span>';
+                    this.style.backgroundColor = 'var(--success)';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-copy"></i><span>Copy URL</span>';
+                        this.style.backgroundColor = '';
+                    }, 2000);
+                    showAlert('URL berhasil disalin!', 'success');
+                });
+            });
+            
+            downloadBtn.addEventListener('click', function() {
+                window.open(fileData.url, '_blank');
+            });
+        }
+
+        function loadRecentUploads() {
+            uploadsList.innerHTML = '';
+            if (uploadedFiles.length === 0) {
+                emptyRecent.style.display = 'block';
+                return;
+            }
+            emptyRecent.style.display = 'none';
+            
+            uploadedFiles.forEach(file => {
+                const icon = getFileIcon(file.type, file.name);
+                const uploadItem = document.createElement('div');
+                uploadItem.className = 'upload-item';
+                uploadItem.innerHTML = `
+                    <div class="upload-header">
+                        <div class="upload-icon"><i class="fas fa-${icon}"></i></div>
+                        <div class="upload-info-history">
+                            <h4>${file.name}</h4>
+                            <p class="upload-details">
+                                <span><i class="fas fa-calendar-alt"></i> ${file.formattedDate}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="upload-url">${file.url}</div>
+                    <div class="upload-actions">
+                        <button class="btn btn-copy copy-history-btn" data-url="${file.url}">
+                            <i class="fas fa-copy"></i> <span>Copy URL</span>
+                        </button>
+                    </div>
+                `;
+                uploadsList.appendChild(uploadItem);
+            });
+            
+            document.querySelectorAll('.copy-history-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    navigator.clipboard.writeText(url).then(() => {
+                        showAlert('URL berhasil disalin!', 'success');
+                    });
+                });
+            });
+        }
+
+        function showAlert(message, type) {
+            alertMessage.textContent = message;
+            alert.className = `alert alert-${type} show`;
+            setTimeout(() => { alert.classList.remove('show'); }, 3000);
+        }
+
+        loadRecentUploads();
+    </script>
+</body>
+</html>
