@@ -1,14 +1,13 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "*.html", "use": "@vercel/static" },
-    { "src": "*.css", "use": "@vercel/static" },
-    { "src": "api/**/*.php", "use": "@vercel/php" }
-  ],
+  "functions": {
+    "api/*.php": {
+      "runtime": "php@8.3.0"
+    }
+  },
   "routes": [
     { "src": "/upload", "dest": "/api/upload.php" },
-    { "src": "/", "dest": "/index.html" },
     { "src": "/style.css", "dest": "/style.css" },
-    { "src": "/(.*)", "dest": "/api/serve.php" }
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/(.*)", "dest": "/api/serve.php?file=$1" }
   ]
 }
